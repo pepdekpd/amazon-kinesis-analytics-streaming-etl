@@ -12,7 +12,7 @@ export interface EmptyBucketOnDeleteProps {
 }
 
 export class EmptyBucketOnDelete extends cdk.Construct {
-    customResource: cfn.CfnCustomResource;
+    customResource: cdk.CfnCustomResource;
 
     constructor(scope: cdk.Construct, id: string, props: EmptyBucketOnDeleteProps) {
         super(scope, id);
@@ -22,7 +22,7 @@ export class EmptyBucketOnDelete extends cdk.Construct {
         const emptyBucketLambda =  new lambda.Function(this, 'EmptyBucketLambda', {
             runtime: lambda.Runtime.PYTHON_3_7,
             timeout: Duration.minutes(15),
-            code: lambda.Code.inline(lambdaSource),
+            code: lambda.Code.fromInline(lambdaSource),
             handler: 'index.empty_bucket',
             memorySize: 512,
             environment: {
@@ -32,8 +32,9 @@ export class EmptyBucketOnDelete extends cdk.Construct {
 
         props.bucket.grantReadWrite(emptyBucketLambda);
 
-        this.customResource = new cfn.CfnCustomResource(this, 'EmptyBucketResource', {
-            serviceToken: CustomResourceProvider.lambda(emptyBucketLambda).serviceToken
+        this.customResource = new cdk.CfnCustomResource(this, 'EmptyBucketResource', {
+            serviceToken: emptyBucketLambda.functionArn
+            // serviceToken: CfnCustomResourceProvider.lambda(emptyBucketLambda).serviceToken
         });
     }
 }

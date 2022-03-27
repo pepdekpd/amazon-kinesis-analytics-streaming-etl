@@ -29,6 +29,7 @@ export class StreamingEtl extends cdk.Stack {
       encryption: BucketEncryption.S3_MANAGED,
       removalPolicy: RemovalPolicy.DESTROY,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      autoDeleteObjects: true,
       metrics: [{
         id: 'EntireBucket',
       }],
@@ -235,7 +236,7 @@ export class StreamingEtl extends cdk.Stack {
     const incomingRecords = new Metric({
       namespace: 'AWS/Kinesis',
       metricName: 'IncomingRecords',
-      dimensions: {
+      dimensionsMap: {
         StreamName: stream.streamName
       },
       period: Duration.minutes(1),
@@ -245,7 +246,7 @@ export class StreamingEtl extends cdk.Stack {
     const incomingBytes = new Metric({
       namespace: 'AWS/Kinesis',
       metricName: 'IncomingBytes',
-      dimensions: {
+      dimensionsMap: {
         StreamName: stream.streamName
       },
       period: Duration.minutes(1),
@@ -255,7 +256,7 @@ export class StreamingEtl extends cdk.Stack {
     const outgoingRecords = new Metric({
       namespace: 'AWS/Kinesis',
       metricName: 'GetRecords.Records',
-      dimensions: {
+      dimensionsMap: {
         StreamName: stream.streamName
       },
       period: Duration.minutes(1),
@@ -265,7 +266,7 @@ export class StreamingEtl extends cdk.Stack {
     const outgoingBytes = new Metric({
       namespace: 'AWS/Kinesis',
       metricName: 'GetRecords.Bytes',
-      dimensions: {
+      dimensionsMap: {
         StreamName: stream.streamName
       },
       period: Duration.minutes(1),
@@ -275,7 +276,7 @@ export class StreamingEtl extends cdk.Stack {
     const millisBehindLatest = new Metric({
       namespace: 'AWS/KinesisAnalytics',
       metricName: 'millisBehindLatest',
-      dimensions: {
+      dimensionsMap: {
         Id: cdk.Fn.join('_', cdk.Fn.split('-', stream.streamName)),
         Application: kdaApp.ref,
         Flow: 'Input'
@@ -287,7 +288,7 @@ export class StreamingEtl extends cdk.Stack {
     const bytesUploaded = new Metric({
       namespace: 'AWS/S3',
       metricName: 'BytesUploaded',
-      dimensions: {
+      dimensionsMap: {
         BucketName: bucket.bucketName,
         FilterId: 'EntireBucket'
       },
@@ -298,7 +299,7 @@ export class StreamingEtl extends cdk.Stack {
     const putRequests = new Metric({
       namespace: 'AWS/S3',
       metricName: 'PutRequests',
-      dimensions: {
+      dimensionsMap: {
         BucketName: bucket.bucketName,
         FilterId: 'EntireBucket'
       },

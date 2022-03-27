@@ -56,7 +56,7 @@ export class BuildPipeline extends cdk.Construct {
       const downloadLambda =  new lambda.Function(this, 'DownloadLambda', {
         runtime: lambda.Runtime.PYTHON_3_7,
         timeout: Duration.seconds(30),
-        code: lambda.Code.inline(lambdaSource),
+        code: lambda.Code.fromInline(lambdaSource),
         handler: 'index.download_sources',
         environment: {
           url: props.github,
@@ -67,8 +67,9 @@ export class BuildPipeline extends cdk.Construct {
 
       props.bucket.grantPut(downloadLambda);
 
-      new cfn.CustomResource(this, 'DownloadLambdaResource', {
-        provider: CustomResourceProvider.lambda(downloadLambda)
+      new cdk.CfnCustomResource(this, 'DownloadLambdaResource', {
+        serviceToken: downloadLambda.functionArn
+        // provider: cfn.CustomResourceProvider.lambda(downloadLambda)
       });
 
 
@@ -119,7 +120,8 @@ export class BuildPipeline extends cdk.Construct {
 
     const project = new codebuild.PipelineProject(this, 'CodebuildProject', {
       environment: {
-        buildImage: codebuild.LinuxBuildImage.UBUNTU_14_04_OPEN_JDK_11
+        // buildImage: codebuild.LinuxBuildImage.UBUNTU_14_04_OPEN_JDK_11
+        buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_3
       },
       buildSpec: buildSpec
     });
@@ -155,7 +157,7 @@ export class BuildPipeline extends cdk.Construct {
 
     const notifyLambda =  new lambda.Function(this, 'NotifyLambda', {
       runtime: lambda.Runtime.PYTHON_3_7,
-      code: lambda.Code.inline(lambdaSource),
+      code: lambda.Code.fromInline(lambdaSource),
       timeout: Duration.seconds(10),
       handler: 'index.notify_build_success',
       environment: {

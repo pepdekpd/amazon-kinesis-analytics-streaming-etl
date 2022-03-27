@@ -34,6 +34,12 @@
           "IgnorePublicAcls": true,
           "RestrictPublicBuckets": true
         },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true"
+          }
+        ],
         "VersioningConfiguration": {
           "Status": "Enabled"
         }
@@ -42,6 +48,180 @@
       "DeletionPolicy": "Delete",
       "Metadata": {
         "aws:cdk:path": "PepdekStreamingEtl/Bucket/Resource"
+      }
+    },
+    "BucketPolicyE9A3008A": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "Bucket83908E77"
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*"
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn"
+                  ]
+                }
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "Bucket83908E77",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "Bucket83908E77",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "PepdekStreamingEtl/Bucket/Policy/Resource"
+      }
+    },
+    "BucketAutoDeleteObjectsCustomResourceBAFD23C2": {
+      "Type": "Custom::S3AutoDeleteObjects",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn"
+          ]
+        },
+        "BucketName": {
+          "Ref": "Bucket83908E77"
+        }
+      },
+      "DependsOn": [
+        "BucketPolicyE9A3008A"
+      ],
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete",
+      "Metadata": {
+        "aws:cdk:path": "PepdekStreamingEtl/Bucket/AutoDeleteObjectsCustomResource/Default"
+      }
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "PepdekStreamingEtl/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role"
+      }
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "AssetParameters15684a15d07860e99d2a8079150ad33dd2cb743677fcd7016dd07345e1b69538S3BucketB021608E"
+          },
+          "S3Key": {
+            "Fn::Join": [
+              "",
+              [
+                {
+                  "Fn::Select": [
+                    0,
+                    {
+                      "Fn::Split": [
+                        "||",
+                        {
+                          "Ref": "AssetParameters15684a15d07860e99d2a8079150ad33dd2cb743677fcd7016dd07345e1b69538S3VersionKeyC73B105A"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "Fn::Select": [
+                    1,
+                    {
+                      "Fn::Split": [
+                        "||",
+                        {
+                          "Ref": "AssetParameters15684a15d07860e99d2a8079150ad33dd2cb743677fcd7016dd07345e1b69538S3VersionKeyC73B105A"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            ]
+          }
+        },
+        "Timeout": 900,
+        "MemorySize": 128,
+        "Handler": "__entrypoint__.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs12.x",
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "Bucket83908E77"
+              },
+              " S3 bucket."
+            ]
+          ]
+        }
+      },
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+      ],
+      "Metadata": {
+        "aws:cdk:path": "PepdekStreamingEtl/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler",
+        "aws:asset:path": "asset.15684a15d07860e99d2a8079150ad33dd2cb743677fcd7016dd07345e1b69538",
+        "aws:asset:property": "Code"
       }
     },
     "EmptyBucketEmptyBucketLambdaServiceRole67452BDD": {
@@ -293,10 +473,8 @@
           ]
         }
       },
-      "UpdateReplacePolicy": "Delete",
-      "DeletionPolicy": "Delete",
       "Metadata": {
-        "aws:cdk:path": "PepdekStreamingEtl/BuildArtifacts/KinesisReplayBuildPipeline/DownloadLambdaResource/Default"
+        "aws:cdk:path": "PepdekStreamingEtl/BuildArtifacts/KinesisReplayBuildPipeline/DownloadLambdaResource"
       }
     },
     "BuildArtifactsKinesisReplayBuildPipelineCodebuildProjectRoleC03B309E": {
@@ -470,7 +648,7 @@
         },
         "Environment": {
           "ComputeType": "BUILD_GENERAL1_SMALL",
-          "Image": "aws/codebuild/java:openjdk-11",
+          "Image": "aws/codebuild/amazonlinux2-x86_64-standard:3.0",
           "ImagePullCredentialsType": "CODEBUILD",
           "PrivilegedMode": false,
           "Type": "LINUX_CONTAINER"
@@ -1362,10 +1540,8 @@
           ]
         }
       },
-      "UpdateReplacePolicy": "Delete",
-      "DeletionPolicy": "Delete",
       "Metadata": {
-        "aws:cdk:path": "PepdekStreamingEtl/BuildArtifacts/FlinkConsumer/DownloadLambdaResource/Default"
+        "aws:cdk:path": "PepdekStreamingEtl/BuildArtifacts/FlinkConsumer/DownloadLambdaResource"
       }
     },
     "BuildArtifactsFlinkConsumerCodebuildProjectRoleEB3F07B4": {
@@ -1539,7 +1715,7 @@
         },
         "Environment": {
           "ComputeType": "BUILD_GENERAL1_SMALL",
-          "Image": "aws/codebuild/java:openjdk-11",
+          "Image": "aws/codebuild/amazonlinux2-x86_64-standard:3.0",
           "ImagePullCredentialsType": "CODEBUILD",
           "PrivilegedMode": false,
           "Type": "LINUX_CONTAINER"
@@ -3302,12 +3478,30 @@
     "CDKMetadata": {
       "Type": "AWS::CDK::Metadata",
       "Properties": {
-        "Analytics": "v2:deflate64:H4sIAAAAAAAA/2VTy27bMBD8lt4Zxk6anOu4yAMoYMEunPOKWtu0Ka7ARwyD0L+XD1lKmos4uzs7JGepOZ8/zPjsxy842xvRnG6DIIM8bByIE1uSts544dhyp1fedT6jNVryRmDCkdJIJ0mzz9kKDLTo0PQsCQd7z8OTFyfM/QMqyxNY7JmCtm6Ah2evRVaLtCvumYSWhzWprJ3XipQUl7zViN7iYUELrAztpIqiQpFvdmRaSDI8pON666idjvpfuNPvIN14p1fQjfqejsrUYO2lanioZIdK6rTrEYtTAyy0bqhPzEwZcM9O8WulTZYbhDYVC4qm0D7m/9D+xZDvUmXEEUz8MRjVQIO6OClsvvSi66JH2YTtHfuaWCaP3sGJQ1TZS71fdYXXMxR3PGw7kTq21ZJVvo5dG1/rMsYJrck7/At18arkp9zCWhISrmPNhTKv+EAi8wUcnuEybDNECxdf4KFF7dh1rmyDwhvpLqMd3xJX6jD7c7oXD7/BHmoC0yTKGPR9z3QcED/a24/5I5//jP/B0Up5Y7x2skW+Lus/5nNeLCQDAAA="
+        "Analytics": "v2:deflate64:H4sIAAAAAAAA/2VTy27jMAz8lr2rStN9nDd1sW2BBWIkRXqmJSVhYkuGHg0Cwf9eyvIDQS7WkByONKK85Mvfj/zxx1+4uAchz4sojFU8bj2IMyuC86bZKGeCFYoVez3jm1JpzRdKZdnKOeWp+YD6wAqjnbdB+NRZgoVGeeJQcC+8Dr4NPZG6JHo0mo31jqXTRfeTx+cgzqqnDSgvpalRXOf0EOfgGRxJ1NBUEnj8F7To1Yk84o4hNDxuTJ1NpnWWnNE7+QHd291jTaLCSFUFrCWPJbaqRp1qJzVYzpBotQlyb2wDaTceqfYJ6Cenb6Bl3vomnfXbQXjeotcecMfO9HXo0sysgiYVMyLP5kD5/+bwak1oU2XCBGb+FExqoKG+ehSuP+yqbekK+sPvnthtokjePsGLI6mksa/bzOuYEk887lqROnZlwcpQUdc2VDqPcEYbE7z6gCpfQs7POXpURiCMU+sLeRz0nIj5Cl5d4DpsM0QrT0/42Cjt2Tg2tlUiWPTX6TruEiN1mNkl+eLxBdyxMmBlokxB13VM04D4yS2+ln/48hf9SCeH+GCD9tgovsnrN/94UD9lAwAA"
       },
       "Metadata": {
         "aws:cdk:path": "PepdekStreamingEtl/CDKMetadata/Default"
       },
       "Condition": "CDKMetadataAvailable"
+    }
+  },
+  "Parameters": {
+    "AssetParameters15684a15d07860e99d2a8079150ad33dd2cb743677fcd7016dd07345e1b69538S3BucketB021608E": {
+      "Type": "String",
+      "Description": "S3 bucket for asset \"15684a15d07860e99d2a8079150ad33dd2cb743677fcd7016dd07345e1b69538\""
+    },
+    "AssetParameters15684a15d07860e99d2a8079150ad33dd2cb743677fcd7016dd07345e1b69538S3VersionKeyC73B105A": {
+      "Type": "String",
+      "Description": "S3 key for asset version \"15684a15d07860e99d2a8079150ad33dd2cb743677fcd7016dd07345e1b69538\""
+    },
+    "AssetParameters15684a15d07860e99d2a8079150ad33dd2cb743677fcd7016dd07345e1b69538ArtifactHash154EE95B": {
+      "Type": "String",
+      "Description": "Artifact hash for asset \"15684a15d07860e99d2a8079150ad33dd2cb743677fcd7016dd07345e1b69538\""
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestamzn2amihvmx8664gp2C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+      "Default": "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
     }
   },
   "Outputs": {
@@ -3592,12 +3786,6 @@
           ]
         }
       ]
-    }
-  },
-  "Parameters": {
-    "SsmParameterValueawsserviceamiamazonlinuxlatestamzn2amihvmx8664gp2C96584B6F00A464EAD1953AFF4B05118Parameter": {
-      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
-      "Default": "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
     }
   }
 }
